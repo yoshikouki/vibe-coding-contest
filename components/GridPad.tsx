@@ -7,6 +7,7 @@ import {
   naturalMinorChordDefinitions, // Import Minor definitions
   otherChordDefinitions, // Import other definitions
   playNotes,
+  playArpeggio, // Import playArpeggio
   ChordName
 } from "../lib/audio"; // Import necessary items from audio.ts
 import { Key } from "./KeySelector"; // Import Key type
@@ -46,6 +47,7 @@ const transposeNote = (note: string, baseKey: Key, targetKey: Key): string => {
 
 export const GridPad: React.FC<GridPadProps> = ({ selectedKey, selectedScale }) => {
   const [activePad, setActivePad] = useState<string | null>(null); // State for active pad key
+  const [arpeggioMode, setArpeggioMode] = useState<boolean>(false); // State for arpeggio mode
 
   const handlePadClick = useCallback((chord: ChordName, padKey: string) => { // Accept padKey
     setActivePad(padKey); // Set active pad
@@ -70,33 +72,52 @@ export const GridPad: React.FC<GridPadProps> = ({ selectedKey, selectedScale }) 
     // Transpose the selected base notes
     const transposedNotes = baseNotes.map(note => transposeNote(note, BASE_KEY, selectedKey));
 
-    playNotes(transposedNotes);
+    // Play chord or arpeggio based on mode
+    if (arpeggioMode) {
+      playArpeggio(transposedNotes);
+    } else {
+      playNotes(transposedNotes);
+    }
 
-  }, [selectedKey, selectedScale]);
+  }, [selectedKey, selectedScale, arpeggioMode]);
+
+  const toggleArpeggioMode = () => {
+    setArpeggioMode(prev => !prev);
+  };
 
   return (
-    <div className="grid grid-cols-4 gap-2 p-4 bg-gray-100 rounded-lg">
-      {/* TODO: Display chord names based on scale (e.g., i, ii°, III) */}
-      {chordLayout.map((row, i) => (
-        <div key={i} className="contents">
-          {row.map((chord, j) => {
-            const padKey = `${i}-${j}`; // Create unique key for the pad
-            return (
-              <button
-                key={padKey}
-                className={`aspect-square rounded-lg shadow-md flex items-center justify-center text-lg font-bold transition-colors duration-100 \
-                  ${activePad === padKey 
-                    ? 'bg-blue-200 scale-95' // Active style
-                    : 'bg-white hover:bg-blue-50 active:bg-blue-100' // Default style
-                  }`}
-                onClick={() => handlePadClick(chord, padKey)} // Pass padKey
-              >
-                {chord}
-              </button>
-            );
-          })}
-        </div>
-      ))}
+    <div> { /* Wrap in a div to place button above grid */ }
+      <div className="mb-2 flex justify-end">
+        <button 
+          onClick={toggleArpeggioMode}
+          className={`px-3 py-1 rounded text-sm font-medium transition-colors ${arpeggioMode ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+        >
+          Arpeggio: {arpeggioMode ? 'ON' : 'OFF'}
+        </button>
+      </div>
+      <div className="grid grid-cols-4 gap-2 p-4 bg-gray-100 rounded-lg">
+        {/* TODO: Display chord names based on scale (e.g., i, ii°, III) */}
+        {chordLayout.map((row, i) => (
+          <div key={i} className="contents">
+            {row.map((chord, j) => {
+              const padKey = `${i}-${j}`; // Create unique key for the pad
+              return (
+                <button
+                  key={padKey}
+                  className={`aspect-square rounded-lg shadow-md flex items-center justify-center text-lg font-bold transition-colors duration-100 \
+                    ${activePad === padKey 
+                      ? 'bg-blue-200 scale-95' // Active style
+                      : 'bg-white hover:bg-blue-50 active:bg-blue-100' // Default style
+                    }`}
+                  onClick={() => handlePadClick(chord, padKey)} // Pass padKey
+                >
+                  {chord}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }; 

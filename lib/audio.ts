@@ -44,9 +44,17 @@ export type ChordName = MajorDiatonicChordName | MinorDiatonicChordName | OtherC
 
 // シンセサイザーのインスタンス (クライアントサイドで初期化)
 let synth: Tone.PolySynth<Tone.Synth>;
+let reverb: Tone.Reverb; // Reverb instance
 
-// シンセサイザーを初期化する関数
+// シンセサイザーとエフェクトを初期化する関数
 const initializeSynth = () => {
+  // Initialize Reverb
+  reverb = new Tone.Reverb({
+    decay: 1.5, // Reverb decay time
+    wet: 0.3    // Mix level (0 to 1)
+  }).toDestination();
+
+  // Initialize Synth and connect through Reverb
   synth = new Tone.PolySynth(Tone.Synth, {
     oscillator: {
       type: "triangle8",
@@ -57,8 +65,9 @@ const initializeSynth = () => {
       sustain: 0.3,
       release: 1,
     },
-  }).toDestination();
-  console.log("Synth initialized");
+  }).connect(reverb); // Connect synth output to reverb input
+
+  console.log("Synth and Reverb initialized");
 };
 
 // コードを再生する関数 (Note配列を受け取るように変更)
@@ -68,6 +77,22 @@ export const playNotes = (notes: string[]) => {
     return;
   }
   synth.triggerAttackRelease(notes, "8n");
+};
+
+// アルペジオを再生する関数
+export const playArpeggio = (notes: string[]) => {
+  if (!synth) {
+    console.warn("Synth not initialized yet.");
+    return;
+  }
+  const now = Tone.now();
+  const noteDuration = "16n"; // 16分音符の長さ
+  const timeBetweenNotes = Tone.Time("16n").toSeconds(); // ノート間の時間
+
+  notes.forEach((note, index) => {
+    // triggerAttackReleaseをスケジュールする
+    synth.triggerAttackRelease(note, noteDuration, now + index * timeBetweenNotes);
+  });
 };
 
 // オーディオコンテキストとシンセサイザーの初期化
