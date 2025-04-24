@@ -1,14 +1,21 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import * as Tone from 'tone'; // Import Tone.js
-import { chordDefinitions, playNotes, ChordName } from "../lib/audio"; // Import necessary items from audio.ts
+import {
+  majorChordDefinitions, // Import Major definitions
+  naturalMinorChordDefinitions, // Import Minor definitions
+  otherChordDefinitions, // Import other definitions
+  playNotes,
+  ChordName
+} from "../lib/audio"; // Import necessary items from audio.ts
 import { Key } from "./KeySelector"; // Import Key type
 import { Scale } from "./ScaleSelector"; // Import Scale type
 
 // Define the base key for chordDefinitions (assumed to be C)
 const BASE_KEY: Key = "C";
 
+// TODO: Update layout based on scale (e.g., minor uses i, ii°, III)
 const chordLayout: ChordName[][] = [
   ["I", "ii", "iii", "IV"],
   ["V", "vi", "vii", "V/V"],
@@ -18,7 +25,7 @@ const chordLayout: ChordName[][] = [
 
 interface GridPadProps {
   selectedKey: Key;
-  selectedScale: Scale; // Add selectedScale prop
+  selectedScale: Scale;
 }
 
 // Helper function to transpose a single note
@@ -37,35 +44,57 @@ const transposeNote = (note: string, baseKey: Key, targetKey: Key): string => {
   }
 };
 
-export const GridPad: React.FC<GridPadProps> = ({ selectedKey, selectedScale }) => { // Destructure selectedScale
-  const handlePadClick = useCallback((chord: ChordName) => {
-    const baseNotes = chordDefinitions[chord];
+export const GridPad: React.FC<GridPadProps> = ({ selectedKey, selectedScale }) => {
+  const [activePad, setActivePad] = useState<string | null>(null); // State for active pad key
+
+  const handlePadClick = useCallback((chord: ChordName, padKey: string) => { // Accept padKey
+    setActivePad(padKey); // Set active pad
+    setTimeout(() => setActivePad(null), 200); // Reset after 200ms
+
+    let baseNotes: readonly string[] | undefined;
+
+    // Select chord definitions based on the scale
+    if (selectedScale === "Natural Minor") {
+      // Attempt to find in minor definitions first, then others
+      baseNotes = (naturalMinorChordDefinitions as any)[chord] ?? (otherChordDefinitions as any)[chord];
+    } else {
+      // Default to Major scale definitions, then others
+      baseNotes = (majorChordDefinitions as any)[chord] ?? (otherChordDefinitions as any)[chord];
+    }
+
     if (!baseNotes) {
-      console.warn(`Chord definition not found for: ${chord}`);
+      console.warn(`Chord definition not found for: ${chord} in ${selectedScale}`);
       return;
     }
 
-    // Transpose notes based on the selected key
-    // TODO: Adjust chord quality based on selectedScale
+    // Transpose the selected base notes
     const transposedNotes = baseNotes.map(note => transposeNote(note, BASE_KEY, selectedKey));
-    
+
     playNotes(transposedNotes);
 
-  }, [selectedKey, selectedScale]); // Add selectedScale as dependency
+  }, [selectedKey, selectedScale]);
 
   return (
     <div className="grid grid-cols-4 gap-2 p-4 bg-gray-100 rounded-lg">
+      {/* TODO: Display chord names based on scale (e.g., i, ii°, III) */}
       {chordLayout.map((row, i) => (
         <div key={i} className="contents">
-          {row.map((chord, j) => (
-            <button
-              key={`${i}-${j}`}
-              className="aspect-square bg-white hover:bg-blue-50 active:bg-blue-100 rounded-lg shadow-md flex items-center justify-center text-lg font-bold transition-colors"
-              onClick={() => handlePadClick(chord)}
-            >
-              {chord}
-            </button>
-          ))}
+          {row.map((chord, j) => {
+            const padKey = `${i}-${j}`; // Create unique key for the pad
+            return (
+              <button
+                key={padKey}
+                className={`aspect-square rounded-lg shadow-md flex items-center justify-center text-lg font-bold transition-colors duration-100 \
+                  ${activePad === padKey 
+                    ? 'bg-blue-200 scale-95' // Active style
+                    : 'bg-white hover:bg-blue-50 active:bg-blue-100' // Default style
+                  }`}
+                onClick={() => handlePadClick(chord, padKey)} // Pass padKey
+              >
+                {chord}
+              </button>
+            );
+          })}
         </div>
       ))}
     </div>

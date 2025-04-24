@@ -1,27 +1,46 @@
 import * as Tone from "tone";
 
-// コード定義
-export const chordDefinitions = {
-  // ダイアトニックコード
-  I: ["C4", "E4", "G4"],
-  ii: ["D4", "F4", "A4"],
-  iii: ["E4", "G4", "B4"],
-  IV: ["F4", "A4", "C5"],
-  V: ["G4", "B4", "D5"],
-  vi: ["A4", "C5", "E5"],
-  vii: ["B4", "D5", "F5"],
+// === コード定義 (C基準) ===
 
+// C Major Scale Diatonic Chords
+export const majorChordDefinitions = {
+  I: ["C4", "E4", "G4"],    // C Major
+  ii: ["D4", "F4", "A4"],    // D minor
+  iii: ["E4", "G4", "B4"],   // E minor
+  IV: ["F4", "A4", "C5"],    // F Major
+  V: ["G4", "B4", "D5"],    // G Major
+  vi: ["A4", "C5", "E5"],    // A minor
+  vii: ["B4", "D5", "F5"],   // B diminished
+} as const;
+
+// C Natural Minor Scale Diatonic Chords
+export const naturalMinorChordDefinitions = {
+  i: ["C4", "Eb4", "G4"],   // C minor
+  ii: ["D4", "F4", "Ab4"],  // D diminished
+  III: ["Eb4", "G4", "Bb4"], // Eb Major
+  iv: ["F4", "Ab4", "C5"],  // F minor
+  v: ["G4", "Bb4", "D5"],  // G minor
+  VI: ["Ab4", "C5", "Eb5"], // Ab Major
+  VII: ["Bb4", "D5", "F5"], // Bb Major
+} as const;
+
+// --- 他のコード (スケールによる変更は一旦省略) ---
+export const otherChordDefinitions = {
   // セカンダリードミナント
   "V/V": ["D4", "F#4", "A4"],
   "V/ii": ["A4", "C#5", "E5"],
-
-  // テンションコード
+  // テンションコード (Major基準のまま)
   "Iadd9": ["C4", "E4", "G4", "D5"],
   "IVmaj7": ["F4", "A4", "C5", "E5"],
   "Vsus4": ["G4", "C5", "D5"],
 } as const;
 
-export type ChordName = keyof typeof chordDefinitions;
+// --- 型定義 ---
+// ダイアトニックコードの型名を統合 (大文字/小文字を区別しないように、全て大文字にするなど検討の余地あり)
+type MajorDiatonicChordName = keyof typeof majorChordDefinitions;
+type MinorDiatonicChordName = keyof typeof naturalMinorChordDefinitions;
+type OtherChordName = keyof typeof otherChordDefinitions;
+export type ChordName = MajorDiatonicChordName | MinorDiatonicChordName | OtherChordName;
 
 // シンセサイザーのインスタンス (クライアントサイドで初期化)
 let synth: Tone.PolySynth<Tone.Synth>;
