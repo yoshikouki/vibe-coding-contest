@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import * as Tone from 'tone'; // Import Tone.js
 import { chordDefinitions, playNotes, ChordName } from "../lib/audio"; // Import necessary items from audio.ts
 import { Key } from "./KeySelector"; // Import Key type
+import { Scale } from "./ScaleSelector"; // Import Scale type
 
 // Define the base key for chordDefinitions (assumed to be C)
 const BASE_KEY: Key = "C";
@@ -17,6 +18,7 @@ const chordLayout: ChordName[][] = [
 
 interface GridPadProps {
   selectedKey: Key;
+  selectedScale: Scale; // Add selectedScale prop
 }
 
 // Helper function to transpose a single note
@@ -35,7 +37,7 @@ const transposeNote = (note: string, baseKey: Key, targetKey: Key): string => {
   }
 };
 
-export const GridPad: React.FC<GridPadProps> = ({ selectedKey }) => {
+export const GridPad: React.FC<GridPadProps> = ({ selectedKey, selectedScale }) => { // Destructure selectedScale
   const handlePadClick = useCallback((chord: ChordName) => {
     const baseNotes = chordDefinitions[chord];
     if (!baseNotes) {
@@ -44,11 +46,12 @@ export const GridPad: React.FC<GridPadProps> = ({ selectedKey }) => {
     }
 
     // Transpose notes based on the selected key
+    // TODO: Adjust chord quality based on selectedScale
     const transposedNotes = baseNotes.map(note => transposeNote(note, BASE_KEY, selectedKey));
     
     playNotes(transposedNotes);
 
-  }, [selectedKey]); // Add selectedKey as dependency
+  }, [selectedKey, selectedScale]); // Add selectedScale as dependency
 
   return (
     <div className="grid grid-cols-4 gap-2 p-4 bg-gray-100 rounded-lg">
